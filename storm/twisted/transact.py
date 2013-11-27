@@ -58,16 +58,24 @@ class Transactor(object):
         commits the transaction if the function runs successfully. If it
         raises an exception the transaction is aborted.
 
+        If the named variable 'async' is set to False we don't run the
+        function in the ThreadPool but in the main thread.
+
         @param function: The function to run.
         @param args: Positional arguments to pass to C{function}.
         @param kwargs: Keyword arguments to pass to C{function}.
         @return: A C{Deferred} that will fire after the function has been run.
         """
-        # Inline the reactor import here for sake of safeness, in case a
-        # custom reactor needs to be installed
-        from twisted.internet import reactor
-        return deferToThreadPool(
-            reactor, self._threadpool, self._wrap, function, *args, **kwargs)
+        run_async = kwargs.pop('async', True)
+        if run_async:
+            # Inline the reactor import here for sake of safeness, in case a
+            # custom reactor needs to be installed
+            from twisted.internet import reactor
+            return deferToThreadPool(
+                reactor, self._threadpool, self._wrap,
+                function, *args, **kwargs)
+
+        return self._wrap(function, *args, **kwargs)
 
     def _wrap(self, function, *args, **kwargs):
         retries = 0

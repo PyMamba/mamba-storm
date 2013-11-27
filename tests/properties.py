@@ -314,6 +314,14 @@ class PropertyTest(TestHelper):
         self.assertEquals(Class2.prop2.name, "prop2")
         self.assertEquals(Class2.prop2.table, Class2)
 
+    def test_creation_counter(self):
+        self.assertTrue(
+            self.Class.prop3._creation_order > self.Class.prop2._creation_order
+        )
+        self.assertTrue(
+            self.Class.prop2._creation_order > self.Class.prop1._creation_order
+        )
+
 
 class PropertyKindsTest(TestHelper):
 
