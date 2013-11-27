@@ -113,16 +113,23 @@ class PropertyColumn(Column):
 
     def __init__(self, prop, cls, attr, name, primary,
                  variable_class, variable_kwargs):
+        self.size = variable_kwargs.pop('size', Undef)
+        self.unsigned = variable_kwargs.pop('unsigned', False)
+        self.index = variable_kwargs.pop('index', False)
+        self.unique = variable_kwargs.pop('unique', False)
+        self.auto_increment = variable_kwargs.pop('auto_increment', False)
+        self.array = variable_kwargs.pop('array', None)
+
         Column.__init__(self, name, cls, primary,
                         VariableFactory(variable_class, column=self,
                                         validator_attribute=attr,
                                         **variable_kwargs))
 
-        self.cls = cls # Used by references
+        self.cls = cls  # Used by references
 
         # Copy attributes from the property to avoid one additional
         # function call on each access.
-        for attr in ["__get__", "__set__", "__delete__"]:
+        for attr in ["__get__", "__set__", "__delete__", '_creation_order']:
             setattr(self, attr, getattr(prop, attr))
 
 
