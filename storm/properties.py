@@ -40,6 +40,7 @@ __all__ = ["Property", "SimpleProperty",
 
 
 class Property(object):
+    creation_counter = 0
 
     def __init__(self, name=None, primary=False,
                  variable_class=Variable, variable_kwargs={}):
@@ -47,6 +48,8 @@ class Property(object):
         self._primary = primary
         self._variable_class = variable_class
         self._variable_kwargs = variable_kwargs
+        self._creation_order = Property.creation_counter
+        Property.creation_counter += 1
 
     def __get__(self, obj, cls=None):
         if obj is None:
@@ -135,7 +138,7 @@ class SimpleProperty(Property):
 
 class Bool(SimpleProperty):
     variable_class = BoolVariable
- 
+
 class Int(SimpleProperty):
     variable_class = IntVariable
 
