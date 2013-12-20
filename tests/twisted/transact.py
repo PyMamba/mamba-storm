@@ -111,6 +111,33 @@ class TransactorTest(TestCase, TestHelper):
         self.assertFailure(deferred, DisconnectionError)
         return deferred
 
+    def test_run_with_auto_commit_false(self):
+        """
+        If the user pass a key as "auto_commit": Fale in the kwargs for
+        a mamba @transact decorated method, we don't call transaction.commit
+        """
+
+        function = self.mocker.mock()
+        self.mocker.order()
+        self.expect(function())
+        self.mocker.replay()
+
+        kwargs = {'auto_commit': False}
+        deferred = self.transactor.run(function, **kwargs)
+        return deferred
+
+    def test_ru_with_auto_commit_true(self):
+
+        function = self.mocker.mock()
+        self.mocker.order()
+        self.expect(function())
+        self.expect(self.transaction.commit())
+        self.mocker.replay()
+
+        kwargs = {'auto_commit': True}
+        deferred = self.transactor.run(function, **kwargs)
+        return deferred
+
     def test_run_with_commit_failure(self):
         """
         If the given function succeeds but the transaction fails to commit,
