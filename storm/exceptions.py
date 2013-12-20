@@ -126,7 +126,7 @@ class TimeoutError(StormError):
         self.message = message
 
     def __str__(self):
-	return ', '.join(
+        return ', '.join(
             [repr(element) for element in
              (self.message, self.statement, self.params)
              if element is not None])
@@ -142,4 +142,16 @@ def install_exceptions(module):
                       DataError, NotSupportedError, InterfaceError):
         module_exception = getattr(module, exception.__name__, None)
         if module_exception is not None:
-            module_exception.__bases__ += (exception,)
+            try:
+                module_exception.__bases__ += (exception,)
+            except TypeError:
+                # Since PsycoPG >= 2.5 psycopg2.Error is built-in
+                tmp_exception = module_exception
+
+                class PsycoPG25Error(tmp_exception):
+                    """We can not patch built-in types
+                    """
+
+                setattr(module, module_exception.__name__, PsycoPG25Error)
+                module_exception = getattr(module, exception.__name__)
+                module_exception.__bases__ += (exception,)
