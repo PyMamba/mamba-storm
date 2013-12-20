@@ -81,8 +81,10 @@ class Transactor(object):
         retries = 0
         while True:
             try:
+                auto_commit = kwargs.pop('auto_commit', True)
                 result = function(*args, **kwargs)
-                self._transaction.commit()
+                if auto_commit:
+                    self._transaction.commit()
             except RETRIABLE_ERRORS, error:
                 if isinstance(error, DisconnectionError):
                     # If we got a disconnection, calling rollback may not be
