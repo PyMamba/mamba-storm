@@ -1,0 +1,13 @@
+#!/bin/bash -eu
+
+# this is a really silly script to configure databases for development in
+# Mac OS X environments and assume that they have been installed using
+# homebrew and they are are running already (using launchctl or whatever other method)
+
+MYSQL_USER="root"
+
+echo " * Create DB Test Fixtures (will fail if existing)"
+createdb storm_test || true
+mysql -u ${MYSQL_USER} -e 'CREATE DATABASE storm_test CHARACTER SET utf8;' || true
+
+echo " * All Done"
