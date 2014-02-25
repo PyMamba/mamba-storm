@@ -41,6 +41,7 @@ from tests.helper import TestHelper
 class CustomVariable(Variable):
     pass
 
+
 class Custom(SimpleProperty):
     variable_class = CustomVariable
 
@@ -49,11 +50,17 @@ class PropertyTest(TestHelper):
 
     def setUp(self):
         TestHelper.setUp(self)
+
         class Class(object):
             __storm_table__ = "mytable"
-            prop1 = Custom("column1", primary=True)
+            prop1 = Custom("column1", primary=True, size=11, unsigned=True)
             prop2 = Custom()
             prop3 = Custom("column3", default=50, allow_none=False)
+            prop4 = Custom(
+                "column4", index=True, unique=True, auto_increment=True,
+                array={'other_value': 1}
+            )
+
         class SubClass(Class):
             __storm_table__ = "mysubtable"
         self.Class = Class
@@ -84,6 +91,39 @@ class PropertyTest(TestHelper):
     def test_auto_name(self):
         self.assertEquals(self.Class.prop2.name, "prop2")
 
+    def test_size(self):
+        self.assertEqual(self.Class.prop1.size, 11)
+
+    def test_unsigned(self):
+        self.assertTrue(self.Class.prop1.unsigned)
+
+    def test_auto_unsigned(self):
+        self.assertFalse(self.Class.prop2.unsigned)
+
+    def test_index(self):
+        self.assertTrue(self.Class.prop4.index)
+
+    def test_auto_index(self):
+        self.assertFalse(self.Class.prop2.index)
+
+    def test_unique(self):
+        self.assertTrue(self.Class.prop4.unique)
+
+    def test_auto_unique(self):
+        self.assertFalse(self.Class.prop2.unique)
+
+    def test_autoincrement(self):
+        self.assertTrue(self.Class.prop4.auto_increment)
+
+    def test_auto_autoincrement(self):
+        self.assertFalse(self.Class.prop2.auto_increment)
+
+    def test_array(self):
+        self.assertEqual(self.Class.prop4.array['other_value'], 1)
+
+    def test_auto_array(self):
+        self.assertIsNone(self.Class.prop1.array)
+
     def test_auto_table(self):
         self.assertEquals(self.Class.prop1.table, self.Class)
         self.assertEquals(self.Class.prop2.table, self.Class)
@@ -112,13 +152,16 @@ class PropertyTest(TestHelper):
     def test_variable_factory_validator_attribute(self):
         # Should work even if we make things harder by reusing properties.
         prop = Custom()
+
         class Class1(object):
             __storm_table__ = "table1"
             prop1 = prop
+
         class Class2(object):
             __storm_table__ = "table2"
             prop2 = prop
         args = []
+
         def validator(obj, attr, value):
             args.append((obj, attr, value))
         variable1 = Class1.prop1.variable_factory(validator=validator)
@@ -152,6 +195,7 @@ class PropertyTest(TestHelper):
 
     def test_set_with_validator(self):
         args = []
+
         def validator(obj, attr, value):
             args[:] = obj, attr, value
             return 42
@@ -288,7 +332,7 @@ class PropertyTest(TestHelper):
 
     def test_set_get_delete_with_wrapper(self):
         obj = self.Class()
-        get_obj_info(obj) # Ensure the obj_info exists for obj.
+        get_obj_info(obj)  # Ensure the obj_info exists for obj.
         self.Class.prop1.__set__(Wrapper(obj), 10)
         self.assertEquals(self.Class.prop1.__get__(Wrapper(obj)), 10)
         self.Class.prop1.__delete__(Wrapper(obj))
@@ -303,9 +347,11 @@ class PropertyTest(TestHelper):
         right now it works, and we should try not to break it.
         """
         prop = Custom()
+
         class Class1(object):
             __storm_table__ = "table1"
             prop1 = prop
+
         class Class2(object):
             __storm_table__ = "table2"
             prop2 = prop
@@ -321,6 +367,9 @@ class PropertyTest(TestHelper):
         self.assertTrue(
             self.Class.prop2._creation_order > self.Class.prop1._creation_order
         )
+        self.assertTrue(
+            self.Class.prop4._creation_order > self.Class.prop3._creation_order
+        )
 
 
 class PropertyKindsTest(TestHelper):
@@ -328,10 +377,12 @@ class PropertyKindsTest(TestHelper):
     def setup(self, property, *args, **kwargs):
         prop2_kwargs = kwargs.pop("prop2_kwargs", {})
         kwargs["primary"] = True
+
         class Class(object):
             __storm_table__ = "mytable"
             prop1 = property("column1", *args, **kwargs)
             prop2 = property(**prop2_kwargs)
+
         class SubClass(Class):
             pass
         self.Class = Class
@@ -675,6 +726,7 @@ class PropertyKindsTest(TestHelper):
         self.setup(Pickle, default_factory=list, allow_none=False)
 
         changes = []
+
         def changed(owner, variable, old_value, new_value, fromdb):
             changes.append((variable, old_value, new_value, fromdb))
 
@@ -736,6 +788,7 @@ class PropertyKindsTest(TestHelper):
         self.setup(JSON, default_factory=list, allow_none=False)
 
         changes = []
+
         def changed(owner, variable, old_value, new_value, fromdb):
             changes.append((variable, old_value, new_value, fromdb))
 
@@ -789,6 +842,7 @@ class PropertyKindsTest(TestHelper):
         self.setup(List, default_factory=list, allow_none=False)
 
         changes = []
+
         def changed(owner, variable, old_value, new_value, fromdb):
             changes.append((variable, old_value, new_value, fromdb))
 
@@ -819,21 +873,21 @@ class PropertyKindsTest(TestHelper):
             id = Int(primary=True)
 
         validator_args = []
+
         def validator(obj, attr, value):
             validator_args[:] = obj, attr, value
             return value
 
         for func, cls, value in [
-                               (Bool, BoolVariable, True),
-                               (Int, IntVariable, 1),
-                               (Float, FloatVariable, 1.1),
-                               (RawStr, RawStrVariable, "str"),
-                               (Unicode, UnicodeVariable, u"unicode"),
-                               (DateTime, DateTimeVariable, datetime.now()),
-                               (Date, DateVariable, date.today()),
-                               (Time, TimeVariable, datetime.now().time()),
-                               (Pickle, PickleVariable, {}),
-                                     ]:
+            (Bool, BoolVariable, True),
+            (Int, IntVariable, 1),
+            (Float, FloatVariable, 1.1),
+            (RawStr, RawStrVariable, "str"),
+            (Unicode, UnicodeVariable, u"unicode"),
+            (DateTime, DateTimeVariable, datetime.now()),
+            (Date, DateVariable, date.today()),
+            (Time, TimeVariable, datetime.now().time()),
+                (Pickle, PickleVariable, {})]:
 
             # Test no default and allow_none=True.
             Class.prop = func(name="name")
@@ -859,7 +913,7 @@ class PropertyKindsTest(TestHelper):
             self.assertEquals(variable.get(), value)
 
             # Test default_factory.
-            Class.prop = func(name="name", default_factory=lambda:value)
+            Class.prop = func(name="name", default_factory=lambda: value)
             column = Class.prop.__get__(None, Class)
             self.assertEquals(column.name, "name")
             self.assertEquals(column.table, Class)
