@@ -21,6 +21,7 @@
 from datetime import datetime, date, time, timedelta
 from decimal import Decimal
 import cPickle as pickle
+import locale
 import re
 try:
     import uuid
@@ -409,11 +410,7 @@ class DateTimeVariable(Variable):
             if isinstance(value, datetime):
                 pass
             elif isinstance(value, (str, unicode)):
-                if " " not in value:
-                    raise ValueError("Unknown date/time format: %r" % value)
-                date_str, time_str = value.split(" ")
-                value = datetime(*(_parse_date(date_str) +
-                                   _parse_time(time_str)))
+                value = _parse_datetime(value)
             else:
                 raise TypeError("Expected datetime, found %s" % repr(value))
             if self._tzinfo is not None:
@@ -424,6 +421,8 @@ class DateTimeVariable(Variable):
         else:
             if type(value) in (int, long, float):
                 value = datetime.utcfromtimestamp(value)
+            elif isinstance(value, (str, unicode)):
+                value = _parse_localized_datetime(value)
             elif not isinstance(value, datetime):
                 raise TypeError("Expected datetime, found %s" % repr(value))
             if self._tzinfo is not None:
@@ -444,13 +443,13 @@ class DateVariable(Variable):
                 return value
             if not isinstance(value, (str, unicode)):
                 raise TypeError("Expected date, found %s" % repr(value))
-            if " " in value:
-                value, time_str = value.split(" ")
             return date(*_parse_date(value))
         else:
             if isinstance(value, datetime):
-                return value.date()
-            if not isinstance(value, date):
+                value = value.date()
+            elif isinstance(value, (str, unicode)):
+                value = date(*_parse_localized_date(value))
+            elif not isinstance(value, date):
                 raise TypeError("Expected date, found %s" % repr(value))
             return value
 
@@ -699,10 +698,46 @@ def _parse_time(time_str):
     return int(hour), int(minute), int(second), 0
 
 def _parse_date(date_str):
+    """
+    parse dates as formated by databases (YYYY-MM-DD)
+    """
+    date_str = date_str.split(" ")[0]  # discards time
     if "-" not in date_str:
         raise ValueError("Unknown date format: %r" % date_str)
     year, month, day = date_str.split("-")
     return int(year), int(month), int(day)
+
+def _parse_datetime(datetime_str):
+    """
+    parse date as formated by databases (YYYY-MM-DD)
+    """
+    if " " not in datetime_str:
+        raise ValueError("Unknown date/time format: %r" % value)
+    date_str, time_str = value.split(" ")
+    return datetime(*(_parse_date(date_str) +
+                      _parse_time(time_str)))
+
+def _parse_localized_date(date_str):
+    """
+    parse date in the locale format
+    """
+    loc, _ = locale.getlocale()
+    if loc is None:
+        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
+    date_str = date_str.split(" ")[0]  # discards time
+    date_fmt = locale.nl_langinfo(locale.D_FMT)
+    dt = datetime.strptime(date_str, date_fmt)
+    return dt.year, dt.month, dt.day
+
+def _parse_localized_datetime(datetime_str):
+    """
+    parse date in the locale format
+    """
+    if " " not in datetime_str:
+        raise ValueError("Unknown date/time format: %r" % value)
+    date_str, time_str = value.split(" ")
+    return datetime(*(_parse_localized_date(date_str) +
+                      _parse_time(time_str)))
 
 
 def _parse_interval_table():
