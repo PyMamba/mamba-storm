@@ -49,6 +49,15 @@ class TransactorTest(TestCase, TestHelper):
         deferred.addCallback(self.assertEqual, 3)
         return deferred
 
+    def test_run_with_async_false(self):
+        self.mocker.order()
+        self.expect(self.function(1, arg=2)).result(3)
+        self.expect(self.transaction.commit())
+        self.mocker.replay()
+        kwargs = {'async': False, 'arg': 2}
+        result = self.transactor.run(self.function, 1, **kwargs)
+        self.assertEqual(result, 3)
+
     def test_run_with_function_failure(self):
         """
         If the given function raises an error, then L{Transactor.run}
@@ -126,7 +135,7 @@ class TransactorTest(TestCase, TestHelper):
         deferred = self.transactor.run(function, **kwargs)
         return deferred
 
-    def test_ru_with_auto_commit_true(self):
+    def test_run_with_auto_commit_true(self):
 
         function = self.mocker.mock()
         self.mocker.order()

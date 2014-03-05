@@ -32,7 +32,6 @@ from storm.variables import (
     PickleVariable, JSONVariable, ListVariable, EnumVariable)
 
 
-
 __all__ = ["Property", "SimpleProperty",
            "Bool", "Int", "Float", "Decimal", "RawStr", "Unicode",
            "DateTime", "Date", "Time", "TimeDelta", "UUID", "Enum",
@@ -146,14 +145,18 @@ class SimpleProperty(Property):
 class Bool(SimpleProperty):
     variable_class = BoolVariable
 
+
 class Int(SimpleProperty):
     variable_class = IntVariable
+
 
 class Float(SimpleProperty):
     variable_class = FloatVariable
 
+
 class Decimal(SimpleProperty):
     variable_class = DecimalVariable
+
 
 class RawStr(SimpleProperty):
     variable_class = RawStrVariable
@@ -161,26 +164,34 @@ class RawStr(SimpleProperty):
 # OBSOLETE RawStr was Chars in 0.9. This will die soon.
 Chars = RawStr
 
+
 class Unicode(SimpleProperty):
     variable_class = UnicodeVariable
+
 
 class DateTime(SimpleProperty):
     variable_class = DateTimeVariable
 
+
 class Date(SimpleProperty):
     variable_class = DateVariable
+
 
 class Time(SimpleProperty):
     variable_class = TimeVariable
 
+
 class TimeDelta(SimpleProperty):
     variable_class = TimeDeltaVariable
+
 
 class UUID(SimpleProperty):
     variable_class = UUIDVariable
 
+
 class Pickle(SimpleProperty):
     variable_class = PickleVariable
+
 
 class JSON(SimpleProperty):
     variable_class = JSONVariable
