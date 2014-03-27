@@ -421,7 +421,7 @@ class DateTimeVariable(Variable):
         else:
             if type(value) in (int, long, float):
                 value = datetime.utcfromtimestamp(value)
-            elif isinstance(value, (str, unicode)):
+            elif isinstance(value, basestring):
                 value = _parse_localized_datetime(value)
             elif not isinstance(value, datetime):
                 raise TypeError("Expected datetime, found %s" % repr(value))
@@ -709,11 +709,11 @@ def _parse_date(date_str):
 
 def _parse_datetime(datetime_str):
     """
-    parse date as formated by databases (YYYY-MM-DD)
+    parse dates as formated by databases (YYYY-MM-DD)
     """
     if " " not in datetime_str:
-        raise ValueError("Unknown date/time format: %r" % value)
-    date_str, time_str = value.split(" ")
+        raise ValueError("Unknown date/time format: %r" % datetime_str)
+    date_str, time_str = datetime_str.split(" ")
     return datetime(*(_parse_date(date_str) +
                       _parse_time(time_str)))
 
@@ -734,8 +734,8 @@ def _parse_localized_datetime(datetime_str):
     parse date in the locale format
     """
     if " " not in datetime_str:
-        raise ValueError("Unknown date/time format: %r" % value)
-    date_str, time_str = value.split(" ")
+        raise ValueError("Unknown date/time format: %r" % datetime_str)
+    date_str, time_str = datetime_str.split(" ")
     return datetime(*(_parse_localized_date(date_str) +
                       _parse_time(time_str)))
 
