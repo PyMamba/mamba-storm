@@ -543,16 +543,6 @@ class DateTimeVariableTest(TestHelper):
         self.assertEquals(converted_obj, datetime_obj)
         self.assertEquals(type(converted_obj.tzinfo), tzutc)
 
-    def _do_get_set_from_str(self, datetime_str, datetime_obj):
-        variable = DateTimeVariable()
-        datetime_uni = unicode(datetime_str)
-        variable.set(datetime_str, from_db=False)
-        self.assertEquals(variable.get(), datetime_obj)
-        variable.set(datetime_uni, from_db=False)
-        self.assertEquals(variable.get(), datetime_obj)
-        variable.set(datetime_obj, from_db=False)
-        self.assertEquals(variable.get(), datetime_obj)
-
     def test_get_set_from_str(self):
         datetime_obj = datetime(1977, 12, 31, 12, 34, 56)
         datetime_fmt = "%s %s" %(locale.nl_langinfo(locale.D_FMT),
