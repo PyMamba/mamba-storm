@@ -460,11 +460,11 @@ class UnicodeVariableTest(TestHelper):
 
 
 class DateTimeVariableTest(TestHelper):
-    LOCALE = "en_IE.utf8"
 
     def setUp(self):
         self.previous_locale = locale.getlocale()
-        locale.setlocale(locale.LC_ALL, self.LOCALE)
+        if self.previous_locale[0] is None:
+            locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
 
     def tearDown(self):
         locale.setlocale(locale.LC_ALL, self.previous_locale)
@@ -554,12 +554,18 @@ class DateTimeVariableTest(TestHelper):
         self.assertEquals(variable.get(), datetime_obj)
 
     def test_get_set_from_str(self):
-        datetime_list = [("31/12/77 12:34:56.78",
-                          datetime(1977, 12, 31, 12, 34, 56, 780000)),
-                         ("31/12/77 12:34:56",
-                          datetime(1977, 12, 31, 12, 34, 56))]
-        for dt_str, dt_obj in datetime_list:
-            self._do_get_set_from_str(dt_str, dt_obj)
+        datetime_obj = datetime(1977, 12, 31, 12, 34, 56)
+        datetime_fmt = "%s %s" %(locale.nl_langinfo(locale.D_FMT),
+                           locale.nl_langinfo(locale.T_FMT))
+        datetime_str = datetime.strftime(datetime_obj, datetime_fmt)
+        datetime_uni = unicode(datetime_str)
+        variable = DateTimeVariable()
+        variable.set(datetime_str, from_db=False)
+        self.assertEquals(variable.get(), datetime_obj)
+        variable.set(datetime_uni, from_db=False)
+        self.assertEquals(variable.get(), datetime_obj)
+        variable.set(datetime_obj, from_db=False)
+        self.assertEquals(variable.get(), datetime_obj)
 
 
 class DateVariableTest(TestHelper):
