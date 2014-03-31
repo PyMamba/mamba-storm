@@ -20,6 +20,7 @@
 #
 from datetime import datetime, date, time, timedelta
 from decimal import Decimal
+import locale
 import cPickle as pickle
 import gc
 import weakref
@@ -460,6 +461,14 @@ class UnicodeVariableTest(TestHelper):
 
 class DateTimeVariableTest(TestHelper):
 
+    def setUp(self):
+        self.previous_locale = locale.getlocale()
+        if self.previous_locale[0] is None:
+            locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
+
+    def tearDown(self):
+        locale.setlocale(locale.LC_ALL, self.previous_locale)
+
     def test_get_set(self):
         epoch = datetime.utcfromtimestamp(0)
         variable = DateTimeVariable()
@@ -506,7 +515,6 @@ class DateTimeVariableTest(TestHelper):
     def test_get_set_with_tzinfo(self):
         datetime_str = "1977-05-04 12:34:56.78"
         datetime_obj = datetime(1977, 5, 4, 12, 34, 56, 780000, tzinfo=tzutc())
-
         variable = DateTimeVariable(tzinfo=tzutc())
 
         # Naive timezone, from_db=True.
@@ -534,6 +542,20 @@ class DateTimeVariableTest(TestHelper):
         converted_obj = variable.get()
         self.assertEquals(converted_obj, datetime_obj)
         self.assertEquals(type(converted_obj.tzinfo), tzutc)
+
+    def test_get_set_from_str(self):
+        datetime_obj = datetime(1977, 12, 31, 12, 34, 56)
+        datetime_fmt = "%s %s" %(locale.nl_langinfo(locale.D_FMT),
+                           locale.nl_langinfo(locale.T_FMT))
+        datetime_str = datetime.strftime(datetime_obj, datetime_fmt)
+        datetime_uni = unicode(datetime_str)
+        variable = DateTimeVariable()
+        variable.set(datetime_str, from_db=False)
+        self.assertEquals(variable.get(), datetime_obj)
+        variable.set(datetime_uni, from_db=False)
+        self.assertEquals(variable.get(), datetime_obj)
+        variable.set(datetime_obj, from_db=False)
+        self.assertEquals(variable.get(), datetime_obj)
 
 
 class DateVariableTest(TestHelper):
